@@ -1,13 +1,10 @@
+
 import streamlit as st
 
-# Set the title of the application.
-st.title("🔐 Cybersecurity Log Analyzer")
-
-# Short description of the project.
-st.write(
-    "Analyze web server logs and identify suspicious login activity."
+# Import the functions from our log analyzer.
+from log_parser import (
+    read_log_file,
+    count_failed_logins,
+    total_failed_logins,
+    find_suspicious_ips,
 )
-
-# Create a button for analyzing the logs.
-if st.button("Analyze Logs"):
-    st.success("Log analysis started!")
