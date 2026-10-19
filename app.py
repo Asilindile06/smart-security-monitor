@@ -8,3 +8,12 @@ from log_parser import (
     total_failed_logins,
     find_suspicious_ips,
 )
+
+# Set the title of the application.
+st.title("🔐 Smart Security Monitor")
+
+# Explain what the application does.
+st.write(
+    "Analyze web server logs and identify suspicious login activity."
+)
+
