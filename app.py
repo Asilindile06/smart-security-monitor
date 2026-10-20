@@ -50,14 +50,28 @@ if st.button("Analyze Logs"):
 
         st.subheader("Suspicious IP Addresses")
 
+        
         if suspicious_ips:
             for ip_address in suspicious_ips:
                 attempts = failed_logins[ip_address]
-                st.warning(
-                    f"{ip_address}: {attempts} failed login attempts"
+
+                # Show the IP address and its failed login count.
+                st.warning(f"Suspicious IP Address: {ip_address}")
+
+                # Explain why the security alert was triggered.
+                st.write(
+                    f"This IP address recorded {attempts} failed login "
+                    f"attempts. The configured threshold is {threshold}."
+                )
+
+                # Explain what the pattern could mean.
+                st.caption(
+                    "Repeated failed logins may indicate a brute-force "
+                    "attempt. This alert is a warning, not proof of an attack."
                 )
         else:
             st.success("No suspicious IP addresses detected.")
+
 
                 # Prepare the security report for download.
         report = {
