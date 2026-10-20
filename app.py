@@ -17,6 +17,15 @@ st.write(
     "Analyze web server logs and identify suspicious login activity."
 )
 
+# Let the user choose the failed login threshold.
+threshold = st.slider(
+    "Failed login threshold",
+    min_value=1,
+    max_value=20,
+    value=3,
+    help="Flag an IP address when its failed login count reaches this number."
+)
+
 # Analyze the logs when the button is clicked.
 if st.button("Analyze Logs"):
     try:
@@ -28,10 +37,10 @@ if st.button("Analyze Logs"):
         # Calculate the total number of failed attempts.
         total_failed = total_failed_logins(failed_logins)
 
-        # Identify IP addresses with 3 or more failed attempts.
+        # Identify IP addresses using the selected threshold.
         suspicious_ips = find_suspicious_ips(
-            failed_logins, threshold=3
-        )
+            failed_logins, threshold=threshold
+)
 
         # Display the analysis results.
         st.metric("Log Entries Analyzed", len(logs))
