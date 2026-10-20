@@ -1,5 +1,6 @@
 
 import streamlit as st
+import json
 
 # Import the functions from our log analyzer.
 from log_parser import (
@@ -57,6 +58,28 @@ if st.button("Analyze Logs"):
                 )
         else:
             st.success("No suspicious IP addresses detected.")
+
+                # Prepare the security report for download.
+        report = {
+            "total_log_entries": len(logs),
+            "total_failed_logins": total_failed,
+            "threshold": threshold,
+            "suspicious_ips": {
+                ip_address: failed_logins[ip_address]
+                for ip_address in suspicious_ips
+            },
+        }
+
+        # Convert the report into formatted JSON.
+        report_json = json.dumps(report, indent=4)
+
+        # Allow the user to download the report.
+        st.download_button(
+            label="Download Security Report (JSON)",
+            data=report_json,
+            file_name="security_report.json",
+            mime="application/json",
+        )
 
     except FileNotFoundError:
         st.error("sample.log was not found. Check that it exists.")
