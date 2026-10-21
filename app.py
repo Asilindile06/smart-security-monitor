@@ -2,7 +2,6 @@
 import streamlit as st
 import json
 
-# Import the functions from our log analyzer.
 from log_parser import (
     parse_log_line,
     count_failed_logins,
@@ -11,22 +10,18 @@ from log_parser import (
     count_status_codes,
 )
 
-# Set the title of the application.
+# Set up the application page.
 st.title("🔐 Smart Security Monitor")
+st.write("Analyze web server logs and identify suspicious login activity.")
 
-# Explain what the application does.
-st.write(
-    "Analyze web server logs and identify suspicious login activity."
-)
-
-# Allow users to upload their own log files.
+# Allow the user to upload a log file.
 uploaded_file = st.file_uploader(
     "Upload a web server log file",
     type=["log", "txt"],
     help="Upload a text file containing web server log entries."
 )
 
-# Let the user choose the failed login threshold.
+# Let the user choose how many failed logins trigger an alert.
 threshold = st.slider(
     "Failed login threshold",
     min_value=1,
@@ -35,10 +30,9 @@ threshold = st.slider(
     help="Flag an IP address when its failed login count reaches this number."
 )
 
-# Analyze the logs when the button is clicked.
 if st.button("Analyze Logs"):
     try:
-        # Read the uploaded file or use the sample log.
+        # Read the uploaded file or use the sample log file.
         if uploaded_file is not None:
             file_content = uploaded_file.getvalue().decode("utf-8")
             log_lines = file_content.splitlines()
@@ -48,7 +42,7 @@ if st.button("Analyze Logs"):
                 log_lines = file.readlines()
             source_name = "sample.log"
 
-        # Parse valid log entries and ignore invalid lines.
+        # Parse valid log entries.
         logs = []
 
         for line in log_lines:
@@ -62,35 +56,25 @@ if st.button("Analyze Logs"):
                         logs.append(log)
 
                 except (ValueError, IndexError):
-                    # Ignore malformed log entries.
                     continue
 
-        # Stop if no valid entries were found.
+        # Stop if the selected file contains no valid entries.
         if not logs:
-            st.error(
-                "No valid log entries were found in the selected file."
-            )
+            st.error("No valid log entries were found in the selected file.")
             st.stop()
 
-        # Count failed login attempts for each IP address.
+        # Calculate the overall security results.
         failed_logins = count_failed_logins(logs)
-
-        # Calculate the total number of failed attempts.
         total_failed = total_failed_logins(failed_logins)
-
-        # Count the different HTTP status codes.
         status_codes = count_status_codes(logs)
-
-        # Identify suspicious IP addresses using the selected threshold.
         suspicious_ips = find_suspicious_ips(
             failed_logins,
             threshold=threshold
         )
 
-        # Show which file was analyzed.
         st.success(f"Successfully analyzed: {source_name}")
 
-        # Display the main security metrics.
+        # Display the main dashboard metrics.
         st.subheader("Security Overview")
 
         col1, col2, col3 = st.columns(3)
@@ -99,7 +83,7 @@ if st.button("Analyze Logs"):
         col2.metric("Failed Login Attempts", total_failed)
         col3.metric("Suspicious IP Addresses", len(suspicious_ips))
 
-        # Display failed login attempts by IP address.
+        # Display failed login activity.
         st.subheader("Failed Login Activity")
 
         if failed_logins:
@@ -107,7 +91,7 @@ if st.button("Analyze Logs"):
         else:
             st.info("No failed login attempts found.")
 
-        # Display HTTP status code counts.
+        # Display HTTP status code totals.
         st.subheader("HTTP Status Code Breakdown")
 
         if status_codes:
@@ -122,9 +106,7 @@ if st.button("Analyze Logs"):
             for ip_address in suspicious_ips:
                 attempts = failed_logins[ip_address]
 
-                st.warning(
-                    f"Suspicious IP Address: {ip_address}"
-                )
+                st.warning(f"Suspicious IP Address: {ip_address}")
 
                 st.write(
                     f"This IP address recorded {attempts} failed login "
@@ -138,7 +120,68 @@ if st.button("Analyze Logs"):
         else:
             st.success("No suspicious IP addresses detected.")
 
-        # Prepare the security report for download.
+        # NEW FEATURE: Allow the user to filter the log entries.
+        st.subheader("🔎 Investigate Log Entries")
+
+        # Build filter options from the logs that were actually analyzed.
+        available_statuses = sorted(
+            {log["status"] for log in logs}
+        )
+        available_paths = sorted(
+            {log["path"] for log in logs}
+        )
+        available_ips = sorted(
+            {log["ip"] for log in logs}
+        )
+
+        # Let the user select a status code, path and IP address.
+        selected_status = st.selectbox(
+            "Filter by HTTP status code",
+            ["All"] + available_statuses
+        )
+
+        selected_path = st.selectbox(
+            "Filter by request path",
+            ["All"] + available_paths
+        )
+
+        selected_ip = st.selectbox(
+            "Filter by IP address",
+            ["All"] + available_ips
+        )
+
+        # Start with all log entries, then apply the chosen filters.
+        filtered_logs = []
+
+        for log in logs:
+            matches_status = (
+                selected_status == "All"
+                or log["status"] == selected_status
+            )
+
+            matches_path = (
+                selected_path == "All"
+                or log["path"] == selected_path
+            )
+
+            matches_ip = (
+                selected_ip == "All"
+                or log["ip"] == selected_ip
+            )
+
+            # Include the entry only when it matches every selected filter.
+            if matches_status and matches_path and matches_ip:
+                filtered_logs.append(log)
+
+        # Show the results of the investigation.
+        st.write(f"Matching log entries: {len(filtered_logs)}")
+
+        if filtered_logs:
+            st.dataframe(filtered_logs, use_container_width=True)
+        else:
+            st.info("No log entries match the selected filters.")
+
+        # Prepare the JSON security report.
         report = {
             "source_file": source_name,
             "total_log_entries": len(logs),
@@ -151,10 +194,9 @@ if st.button("Analyze Logs"):
             },
         }
 
-        # Convert the report into formatted JSON.
         report_json = json.dumps(report, indent=4)
 
-        # Allow the user to download the report.
+        # Let the user download the report.
         st.download_button(
             label="Download Security Report (JSON)",
             data=report_json,
@@ -163,11 +205,7 @@ if st.button("Analyze Logs"):
         )
 
     except FileNotFoundError:
-        st.error(
-            "sample.log was not found. Upload a log file to continue."
-        )
+        st.error("sample.log was not found. Upload a log file to continue.")
 
     except UnicodeDecodeError:
-        st.error(
-            "The uploaded file could not be decoded as UTF-8 text."
-        )
+        st.error("The uploaded file could not be decoded as UTF-8 text.")
