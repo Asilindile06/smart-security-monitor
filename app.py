@@ -1,6 +1,7 @@
 
 import streamlit as st
 import json
+import pandas as pd
 
 from log_parser import (
     parse_log_line,
@@ -178,8 +179,26 @@ if st.button("Analyze Logs"):
 
         if filtered_logs:
             st.dataframe(filtered_logs, use_container_width=True)
+
+            if filtered_logs:
+                st.dataframe(filtered_logs, use_container_width=True)
+
+            # Convert the filtered log entries into a CSV file.
+            filtered_logs_df = pd.DataFrame(filtered_logs)
+            csv_data = filtered_logs_df.to_csv(index=False).encode("utf-8")
+
+            # Allow the user to download the filtered entries.
+            st.download_button(
+                label="Download Filtered Logs as CSV",
+                data=csv_data,
+                file_name="filtered_log_entries.csv",
+                mime="text/csv",
+            )
+
         else:
             st.info("No log entries match the selected filters.")
+
+            
 
         # Prepare the JSON security report.
         report = {
