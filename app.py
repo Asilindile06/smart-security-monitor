@@ -4,7 +4,7 @@ import json
 
 # Import the functions from our log analyzer.
 from log_parser import (
-    read_log_file,
+    parse_log_line,
     count_failed_logins,
     total_failed_logins,
     find_suspicious_ips,
@@ -19,6 +19,13 @@ st.write(
     "Analyze web server logs and identify suspicious login activity."
 )
 
+# Allow users to upload their own log files.
+uploaded_file = st.file_uploader(
+    "Upload a web server log file",
+    type=["log", "txt"],
+    help="Upload a text file containing web server log entries."
+)
+
 # Let the user choose the failed login threshold.
 threshold = st.slider(
     "Failed login threshold",
@@ -31,8 +38,39 @@ threshold = st.slider(
 # Analyze the logs when the button is clicked.
 if st.button("Analyze Logs"):
     try:
-        # Read the log file.
-        logs = read_log_file("sample.log")
+        # Read the uploaded file or use the sample log.
+        if uploaded_file is not None:
+            file_content = uploaded_file.getvalue().decode("utf-8")
+            log_lines = file_content.splitlines()
+            source_name = uploaded_file.name
+        else:
+            with open("sample.log", "r", encoding="utf-8") as file:
+                log_lines = file.readlines()
+            source_name = "sample.log"
+
+        # Parse valid log entries and ignore invalid lines.
+        logs = []
+
+        for line in log_lines:
+            line = line.strip()
+
+            if line:
+                try:
+                    log = parse_log_line(line)
+
+                    if log is not None:
+                        logs.append(log)
+
+                except (ValueError, IndexError):
+                    # Ignore malformed log entries.
+                    continue
+
+        # Stop if no valid entries were found.
+        if not logs:
+            st.error(
+                "No valid log entries were found in the selected file."
+            )
+            st.stop()
 
         # Count failed login attempts for each IP address.
         failed_logins = count_failed_logins(logs)
@@ -48,6 +86,9 @@ if st.button("Analyze Logs"):
             failed_logins,
             threshold=threshold
         )
+
+        # Show which file was analyzed.
+        st.success(f"Successfully analyzed: {source_name}")
 
         # Display the main security metrics.
         st.subheader("Security Overview")
@@ -81,18 +122,15 @@ if st.button("Analyze Logs"):
             for ip_address in suspicious_ips:
                 attempts = failed_logins[ip_address]
 
-                # Show the IP address and its failed login count.
                 st.warning(
                     f"Suspicious IP Address: {ip_address}"
                 )
 
-                # Explain why the alert was triggered.
                 st.write(
                     f"This IP address recorded {attempts} failed login "
                     f"attempts. The configured threshold is {threshold}."
                 )
 
-                # Explain what the pattern could mean.
                 st.caption(
                     "Repeated failed logins may indicate a brute-force "
                     "attempt. This alert is a warning, not proof of an attack."
@@ -102,6 +140,7 @@ if st.button("Analyze Logs"):
 
         # Prepare the security report for download.
         report = {
+            "source_file": source_name,
             "total_log_entries": len(logs),
             "total_failed_logins": total_failed,
             "threshold": threshold,
@@ -125,6 +164,10 @@ if st.button("Analyze Logs"):
 
     except FileNotFoundError:
         st.error(
-            "sample.log was not found. Check that it exists."
+            "sample.log was not found. Upload a log file to continue."
         )
 
+    except UnicodeDecodeError:
+        st.error(
+            "The uploaded file could not be decoded as UTF-8 text."
+        )
