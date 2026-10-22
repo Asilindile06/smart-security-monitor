@@ -178,10 +178,8 @@ if st.button("Analyze Logs"):
         st.write(f"Matching log entries: {len(filtered_logs)}")
 
         if filtered_logs:
+            # Display the matching log entries only once.
             st.dataframe(filtered_logs, use_container_width=True)
-
-            if filtered_logs:
-                st.dataframe(filtered_logs, use_container_width=True)
 
             # Convert the filtered log entries into a CSV file.
             filtered_logs_df = pd.DataFrame(filtered_logs)
