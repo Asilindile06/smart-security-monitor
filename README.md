@@ -142,4 +142,6 @@ GitHub: [@Asilindile06](https://github.com/Asilindile06)
 
 ---
 
+Verification code 
+WTC-3JHACMZH
 *Smart Security Monitor — turning web server logs into actionable security insights.*
