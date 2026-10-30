@@ -146,4 +146,6 @@ GitHub: [@Asilindile06](https://github.com/Asilindile06)
 
 *Smart Security Monitor — turning web server logs into actionable security insights.*
 
-WTC-3JHACMZH
+## WeThinkCode_ Elective Verification
+
+WTC Elective Verification Code: WTC-3JHACMZH
