@@ -1,6 +1,6 @@
 # 🔐 Smart Security Monitor
 
-WTC-3JHACMZH
+WTC-3JHACMZHR
 A Python-based cybersecurity project that analyzes web server logs to identify suspicious login activity and help investigate potential security threats.
 
 ## 📌 Project Overview
@@ -143,6 +143,7 @@ GitHub: [@Asilindile06](https://github.com/Asilindile06)
 
 ---
 
-Verification code 
-WTC-3JHACMZH
+
 *Smart Security Monitor — turning web server logs into actionable security insights.*
+
+WTC-3JHACMZH
